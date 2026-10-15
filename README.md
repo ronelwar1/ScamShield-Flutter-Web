@@ -1,17 +1,20 @@
-# scamshield
 
-A new Flutter project.
 
-## Getting Started
+ScamShield
+Summary
 
-This project is a starting point for a Flutter application.
+Many people in our community get scam messages through text and chat, like fake prizes, fake job offers, and phishing links, and they don't know how to tell if a message is safe. ScamShield is a web app where a user can paste a suspicious message and get a quick analysis of whether it looks like a scam. The first features are a login screen, a home screen with a chatbot-style interface, and a service that checks the message and shows the result.
 
-A few resources to get you started if this is your first Flutter project:
+Current stack
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Flutter Web / Dart; planned REST API and PostgreSQL.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Run locally
+
+Open a terminal inside the project folder (the one with pubspec.yaml), then run:
+
+flutter pub get
+flutter run -d chrome
+First checkpoint
+
+Date: October 15, 2026 | Commit: 67f3c24
