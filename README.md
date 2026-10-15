@@ -1,17 +1,34 @@
-# flutter_application_1
+# ScamShield
 
-A new Flutter project.
+## Summary
+ScamShield: A Natural Language Processing-Based Suspicious Message
+Classification and Risk Screening System for Messages. Users paste a
+suspicious message and receive a risk screening (classification, risk level,
+confidence, explanation). This first checkpoint contains only the Flutter Web
+starter: Home (S-01 baseline) and Login (S-04 baseline) screens.
 
-## Getting Started
+## Current stack
+- Implemented: Flutter Web / Dart (starter UI, routing, reusable widgets)
+- Planned (not implemented): FastAPI REST API, PostgreSQL
 
-This project is a starting point for a Flutter application.
+## Run locally
+```
+flutter pub get
+flutter run -d chrome
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Source layout (`lib/`)
+- `main.dart` – entry point
+- `app.dart` – MaterialApp, theme, routing setup
+- `screens/` – Home, Login, Not Found
+- `widgets/` – AppButton, AppTextField
+- `services/` – future API client
+- `models/` – client-side data models
+- `routes/` – route names and generator
+- `constants/` – app-wide constants (no secrets)
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Team
+Jian Rainier C. Dablo · Ashley Joyd C. Pullos · Ronel S. Silvosa
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## First Checkpoint
+Date: October 15, 2026 Commit: 113b29f
