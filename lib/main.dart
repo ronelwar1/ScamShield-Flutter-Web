@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'app.dart';
+import 'screens/home_screen.dart';
+import 'screens/report_form_screen.dart';
+
 void main() => runApp(const ScamShieldApp());
 
 const Color maroon = Color(0xFF6F1628);
@@ -18,6 +22,7 @@ class ScamShieldApp extends StatelessWidget {
     return MaterialApp(
       title: 'ScamShield',
       debugShowCheckedModeBanner: false,
+      routes: buildAppRoutes(),
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: pageBackground,
@@ -428,6 +433,7 @@ class _ScamShieldHomeState extends State<ScamShieldHome> {
                 label: 'New chat',
                 outlined: true,
                 onTap: _clearConversation,
+                
               ),
             ),
             const SizedBox(height: 28),
@@ -440,6 +446,13 @@ class _ScamShieldHomeState extends State<ScamShieldHome> {
               label: 'Current conversation',
               selected: true,
               onTap: () {},
+            ),
+            _SidebarItem(
+              icon: Icons.assignment_outlined,
+              label: 'Report Form',
+              onTap: () {
+                Navigator.of(context).pushNamed('/report');
+              },
             ),
             const Spacer(),
             const Padding(
@@ -519,6 +532,10 @@ class _ScamShieldHomeState extends State<ScamShieldHome> {
             ],
           ),
           const Spacer(),
+          if (MediaQuery.sizeOf(context).width > 900) ...[
+            const ReportFormHomeButton(compact: true),
+            const SizedBox(width: 9),
+          ],
           if (MediaQuery.sizeOf(context).width > 570) ...[
             TextButton.icon(
               onPressed: () => _showPage(AppPage.login),
