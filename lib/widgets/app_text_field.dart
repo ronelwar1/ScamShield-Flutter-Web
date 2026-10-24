@@ -12,6 +12,10 @@ class AppTextField extends StatefulWidget {
     this.keyboardType,
     this.textInputAction,
     this.onFieldSubmitted,
+    this.hint,
+    this.minLines,
+    this.maxLines = 1,
+    this.enabled = true,
   });
 
   final String label;
@@ -22,6 +26,10 @@ class AppTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
+  final String? hint;
+  final int? minLines;
+  final int maxLines;
+  final bool enabled;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -35,11 +43,15 @@ class _AppTextFieldState extends State<AppTextField> {
         controller: widget.controller,
         validator: widget.validator,
         obscureText: _hidden,
+        enabled: widget.enabled,
+        minLines: widget.obscure ? null : widget.minLines,
+        maxLines: widget.obscure ? 1 : widget.maxLines,
         keyboardType: widget.keyboardType,
         textInputAction: widget.textInputAction,
         onFieldSubmitted: widget.onFieldSubmitted,
         decoration: InputDecoration(
           labelText: widget.label,
+          hintText: widget.hint,
           prefixIcon: widget.icon == null ? null : Icon(widget.icon),
           suffixIcon: widget.obscure
               ? IconButton(

@@ -74,6 +74,19 @@ class _HomeScreenState extends State<HomeScreen> {
           children: <Widget>[
             _hero(context, wide),
             _howItWorks(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: AppButton(
+                  label: 'Report a scam message',
+                  icon: Icons.flag_outlined,
+                  secondary: true,
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.report),
+                ),
+              ),
+            ),
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 8, 20, 32),
               child: Text(
@@ -116,6 +129,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           Navigator.pushNamed(context, AppRoutes.login),
                       child: const Text('Log in'),
                     ),
+                    if (wide)
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                            foregroundColor: Colors.white),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.report),
+                        icon: const Icon(Icons.flag_outlined, size: 18),
+                        label: const Text('Report a scam'),
+                      )
+                    else
+                      IconButton(
+                        tooltip: 'Report a scam',
+                        color: Colors.white,
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.report),
+                        icon: const Icon(Icons.flag_outlined),
+                      ),
                     if (wide) ...<Widget>[
                       const SizedBox(width: 8),
                       FilledButton(
