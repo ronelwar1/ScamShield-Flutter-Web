@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const Color _defaultButtonMaroon = Color(0xFF6F1628);
+const Color _defaultButtonMaroon = Color(0xFF0B7A74); // brand teal (name kept to limit churn)
 
 class AppButton extends StatelessWidget {
   const AppButton({

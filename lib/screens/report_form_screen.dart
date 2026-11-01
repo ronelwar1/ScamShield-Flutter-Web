@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_colors.dart';
+import '../services/scam_analysis_service.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_text_field.dart';
-
-const Color _reportMaroon = Color(0xFF6F1628);
-const Color _reportDeepMaroon = Color(0xFF4A0D1C);
-const Color _reportBackground = Color(0xFFF8F6F7);
-const Color _reportLine = Color(0xFFE9E0E3);
-const Color _reportText = Color(0xFF292226);
-const Color _reportMuted = Color(0xFF7B7075);
+import '../widgets/common_widgets.dart';
 
 enum ReportUiState { idle, loading, success, empty, error }
 
+const List<(String, String)> _channels = [
+  ('sms', '💬 Text / SMS'),
+  ('email', '✉️ Email'),
+  ('social', '📱 Social media'),
+  ('call', '📞 Phone call'),
+  ('other', '🌐 Other'),
+];
+
+/// Sends a suspicious message to the ScamShield server (with consent). Text is masked before it is stored.
 class ReportFormScreen extends StatefulWidget {
-  const ReportFormScreen({super.key});
+  const ReportFormScreen({super.key, required this.service, this.initialMessage});
+
+  final ScamAnalysisService service;
+  final String? initialMessage;
 
   @override
   State<ReportFormScreen> createState() => _ReportFormScreenState();
@@ -22,12 +30,22 @@ class ReportFormScreen extends StatefulWidget {
 class _ReportFormScreenState extends State<ReportFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  final _messageController = TextEditingController();
+  late final TextEditingController _messageController = TextEditingController(text: widget.initialMessage ?? '');
 
   ReportUiState _uiState = ReportUiState.empty;
+  String _channel = 'sms';
+  bool _consent = false;
+  bool _consentError = false;
   bool _simulateFailure = false;
   String _statusMessage = '';
+  ReportReceipt? _receipt;
   final List<String> _reports = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if ((widget.initialMessage ?? '').isNotEmpty) _uiState = ReportUiState.idle;
+  }
 
   @override
   void dispose() {
@@ -38,123 +56,91 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
 
   Future<void> _submitReport() async {
     if (_uiState == ReportUiState.loading) return;
-
     FocusScope.of(context).unfocus();
-    if (!_formKey.currentState!.validate()) return;
+    final valid = _formKey.currentState!.validate();
+    setState(() => _consentError = !_consent);
+    if (!valid || !_consent) return;
 
     setState(() {
       _uiState = ReportUiState.loading;
-      _statusMessage = 'Processing your report...';
+      _statusMessage = 'Sending your report…';
+      _receipt = null;
     });
 
-    await Future<void>.delayed(const Duration(seconds: 3));
-    if (!mounted) return;
-
-    if (_simulateFailure) {
+    try {
+      if (_simulateFailure) {
+        await Future<void>.delayed(const Duration(milliseconds: 700));
+        throw const ApiException('Simulated failure for testing. Untick the box and try again.');
+      }
+      final title = _titleController.text.trim();
+      final receipt = await widget.service.submitReport(
+        title: title,
+        message: _messageController.text.trim(),
+        channel: _channel,
+        consent: _consent,
+      );
+      if (!mounted) return;
+      setState(() {
+        _reports.insert(0, title.isEmpty ? 'Untitled report' : title);
+        _receipt = receipt;
+        _uiState = ReportUiState.success;
+        _statusMessage = receipt.note;
+      });
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
         _uiState = ReportUiState.error;
-        _statusMessage =
-            'The simulated operation failed. Select Retry to try again.';
+        _statusMessage = e is ApiException && !e.isNetwork
+            ? e.message
+            : 'Could not reach the ScamShield server at ${ScamAnalysisService.baseUrl}. Your report was not sent. Start the backend and try again.';
       });
-      return;
     }
-
-    final title = _titleController.text.trim().isEmpty
-        ? 'Untitled report'
-        : _titleController.text.trim();
-
-    setState(() {
-      _reports.insert(0, title);
-      _uiState = ReportUiState.success;
-      _statusMessage =
-          'The simulated submission completed successfully. '
-          'No database record was saved.';
-    });
   }
 
-  Future<void> _retryReport() async {
+  void _resetForm() {
     setState(() {
-      _simulateFailure = false;
+      _titleController.clear();
+      _messageController.clear();
+      _consent = false;
+      _consentError = false;
+      _receipt = null;
       _uiState = ReportUiState.idle;
-    });
-    await _submitReport();
-  }
-
-  void _clearReports() {
-    setState(() {
-      _reports.clear();
-      _uiState = ReportUiState.empty;
       _statusMessage = '';
     });
   }
 
-  Widget _buildStatePanel() {
+  Widget _statePanel() {
     switch (_uiState) {
       case ReportUiState.loading:
-        return _stateCard(
-          title: 'Loading',
-          message: 'Please wait while the report is being processed...',
-          color: _reportMaroon,
-          showProgress: true,
-        );
-
+        return _stateCard(title: 'Sending', message: _statusMessage, color: AppColors.primary, showProgress: true);
       case ReportUiState.success:
         return _stateCard(
-          icon: Icons.check_circle_outline_rounded,
-          title: 'Success',
-          message: _statusMessage,
-          color: Colors.green.shade700,
-          action: AppButton(
-            label: 'Create Another Report',
-            icon: Icons.add_rounded,
-            expand: false,
-            onPressed: () {
-              setState(() {
-                _titleController.clear();
-                _messageController.clear();
-                _uiState = _reports.isEmpty
-                    ? ReportUiState.empty
-                    : ReportUiState.idle;
-                _statusMessage = '';
-              });
-            },
-          ),
+          icon: Icons.check_circle_rounded,
+          title: 'Thank you! Report received 🎉',
+          message: '$_statusMessage${_receipt == null ? '' : '\n\nSaved as report #${_receipt!.id}. What we stored (masked): “${_receipt!.storedText}”'}',
+          color: AppColors.safe,
+          action: AppButton(label: 'Report another', icon: Icons.add_rounded, expand: false, onPressed: _resetForm),
         );
-
       case ReportUiState.empty:
         return _stateCard(
           icon: Icons.inbox_outlined,
           title: 'No reports yet',
-          message: 'Your report list is empty. Submit a report to see it here.',
-          color: _reportMuted,
-          action: AppButton(
-            label: 'Create Report',
-            icon: Icons.edit_note_rounded,
-            expand: false,
-            onPressed: () {
-              setState(() {
-                _uiState = ReportUiState.idle;
-                _statusMessage = '';
-              });
-              FocusScope.of(context).requestFocus(FocusNode());
-            },
-          ),
+          message: 'Reports you send in this session will be listed below.',
+          color: AppColors.mutedText,
         );
-
       case ReportUiState.error:
         return _stateCard(
           icon: Icons.error_outline_rounded,
-          title: 'Error',
+          title: 'That didn\'t go through',
           message: _statusMessage,
-          color: _reportMaroon,
+          color: AppColors.coralDeep,
           action: AppButton(
-            label: 'Retry',
+            label: 'Try again',
             icon: Icons.refresh_rounded,
             expand: false,
-            onPressed: _retryReport,
+            onPressed: _submitReport,
           ),
         );
-
       case ReportUiState.idle:
         return const SizedBox.shrink();
     }
@@ -168,56 +154,23 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
     bool showProgress = false,
     Widget? action,
   }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _reportLine),
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return SoftCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               if (showProgress)
-                const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: _reportMaroon,
-                  ),
-                )
+                const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5))
               else
-                Icon(icon, color: color, size: 24),
+                Icon(icon, color: color, size: 26),
               const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
+              Expanded(child: Text(title, style: TextStyle(color: color, fontSize: 17, fontWeight: FontWeight.w900))),
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            message,
-            style: const TextStyle(
-              color: _reportMuted,
-              fontSize: 13,
-              height: 1.5,
-            ),
-          ),
-          if (action != null) ...[
-            const SizedBox(height: 14),
-            action,
-          ],
+          Text(message, style: const TextStyle(color: AppColors.text, fontSize: 14.5, height: 1.5)),
+          if (action != null) ...[const SizedBox(height: 14), action],
         ],
       ),
     );
@@ -226,183 +179,147 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _reportBackground,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: _reportMaroon,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        title: const Text(
-          'ScamShield Report Form',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
+        title: const Text('Report a message', style: TextStyle(fontWeight: FontWeight.w900)),
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 680),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Submit a Suspicious Message',
-                    style: TextStyle(
-                      color: _reportDeepMaroon,
-                      fontSize: 23,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  const Text(
-                    'Enter the message you want to review. '
-                    'This Activity 9 form uses simulated processing.',
-                    style: TextStyle(
-                      color: _reportMuted,
-                      fontSize: 13,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: _reportLine),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          AppTextField(
-                            controller: _titleController,
-                            label: 'Report Title (optional)',
-                            hintText: 'e.g. Suspicious prize message',
-                            prefixIcon: Icons.title_rounded,
-                            textCapitalization: TextCapitalization.sentences,
-                          ),
-                          const SizedBox(height: 18),
-                          AppTextField(
-                            controller: _messageController,
-                            label: 'Suspicious Message *',
-                            hintText: 'Paste the suspicious message here...',
-                            prefixIcon: Icons.message_outlined,
-                            minLines: 4,
-                            maxLines: 6,
-                            textCapitalization: TextCapitalization.sentences,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter the suspicious message.';
-                              }
-                              if (value.trim().length < 5) {
-                                return 'Enter at least 5 characters.';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 14),
-                          CheckboxListTile(
-                            value: _simulateFailure,
-                            onChanged: _uiState == ReportUiState.loading
-                                ? null
-                                : (value) {
-                                    setState(() {
-                                      _simulateFailure = value ?? false;
-                                    });
-                                  },
-                            contentPadding: EdgeInsets.zero,
-                            controlAffinity: ListTileControlAffinity.leading,
-                            activeColor: _reportMaroon,
-                            title: const Text(
-                              'Simulate failure for testing',
-                              style: TextStyle(
-                                color: _reportText,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: const Text(
-                              'For the Activity 9 Error screenshot only.',
-                              style: TextStyle(
-                                color: _reportMuted,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          AppButton(
-                            label: 'Submit for Analysis',
-                            icon: Icons.shield_outlined,
-                            isLoading: _uiState == ReportUiState.loading,
-                            onPressed: _uiState == ReportUiState.loading
-                                ? null
-                                : _submitReport,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  const Text(
-                    'Submission Response',
-                    style: TextStyle(
-                      color: _reportDeepMaroon,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _buildStatePanel(),
-                  if (_reports.isNotEmpty) ...[
-                    const SizedBox(height: 22),
-                    Row(
+        child: SingleChildScrollView(
+          child: PageBody(
+            maxWidth: 720,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const PageHeading(
+                  emoji: '🚩',
+                  title: 'Help protect others',
+                  subtitle: 'Send a suspicious message so it can be reviewed and used to improve ScamShield.',
+                ),
+                const SizedBox(height: 18),
+                SoftCard(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Expanded(
-                          child: Text(
-                            'Submitted Reports (Demo)',
-                            style: TextStyle(
-                              color: _reportDeepMaroon,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
+                        AppTextField(
+                          controller: _titleController,
+                          label: 'Title (optional)',
+                          hintText: 'e.g. Fake parcel fee message',
+                          prefixIcon: Icons.title_rounded,
+                          textCapitalization: TextCapitalization.sentences,
+                        ),
+                        const SizedBox(height: 16),
+                        AppTextField(
+                          controller: _messageController,
+                          label: 'Suspicious message *',
+                          hintText: 'Paste the message here…',
+                          prefixIcon: Icons.message_outlined,
+                          minLines: 4,
+                          maxLines: 8,
+                          textCapitalization: TextCapitalization.sentences,
+                          validator: (value) {
+                            final v = (value ?? '').trim();
+                            if (v.isEmpty) return 'Please enter the suspicious message.';
+                            if (v.length < 5) return 'Enter at least 5 characters.';
+                            if (v.length > 5000) return 'Please keep it under 5,000 characters.';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('Where did you get it?', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.text)),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final c in _channels)
+                              ChoiceChip(
+                                label: Text(c.$2),
+                                selected: _channel == c.$1,
+                                selectedColor: AppColors.mint,
+                                onSelected: (_) => setState(() => _channel = c.$1),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        CheckboxListTile(
+                          value: _consent,
+                          onChanged: _uiState == ReportUiState.loading
+                              ? null
+                              : (v) => setState(() {
+                                    _consent = v ?? false;
+                                    if (_consent) _consentError = false;
+                                  }),
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          activeColor: AppColors.primary,
+                          title: const Text(
+                            'I agree that this message may be stored to help improve ScamShield.',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.text),
+                          ),
+                          subtitle: Text(
+                            'Codes, emails and long numbers are masked before saving. Please don\'t include anything private.',
+                            style: TextStyle(fontSize: 12.5, color: _consentError ? AppColors.coralDeep : AppColors.mutedText),
                           ),
                         ),
-                        TextButton(
-                          onPressed: _clearReports,
-                          child: const Text('Clear'),
+                        if (_consentError)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Text('Please tick the box to send your report.', style: TextStyle(color: AppColors.coralDeep, fontWeight: FontWeight.w700, fontSize: 13)),
+                          ),
+                        CheckboxListTile(
+                          value: _simulateFailure,
+                          onChanged: _uiState == ReportUiState.loading ? null : (v) => setState(() => _simulateFailure = v ?? false),
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          activeColor: AppColors.primary,
+                          dense: true,
+                          title: const Text('Demo: simulate a failure', style: TextStyle(fontSize: 13, color: AppColors.mutedText)),
+                          subtitle: const Text('Only for showing the error screen.', style: TextStyle(fontSize: 12, color: AppColors.mutedText)),
+                        ),
+                        const SizedBox(height: 10),
+                        AppButton(
+                          label: 'Send report',
+                          icon: Icons.send_rounded,
+                          isLoading: _uiState == ReportUiState.loading,
+                          onPressed: _uiState == ReportUiState.loading ? null : _submitReport,
                         ),
                       ],
                     ),
-                    ..._reports.map(
-                      (title) => Card(
-                        color: Colors.white,
-                        child: ListTile(
-                          leading: const Icon(
-                            Icons.description_outlined,
-                            color: _reportMaroon,
-                          ),
-                          title: Text(title),
-                          subtitle: const Text(
-                            'Demo entry — not saved to a database',
-                          ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _statePanel(),
+                if (_reports.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const Text('Sent this session', style: TextStyle(color: AppColors.primaryDark, fontSize: 16, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 8),
+                  for (final title in _reports)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: SoftCard(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.description_outlined, color: AppColors.primary),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.text))),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 18),
-                  OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    label: const Text('Back to ScamShield'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _reportMaroon,
-                      side: const BorderSide(color: _reportLine),
-                      padding: const EdgeInsets.all(14),
-                    ),
-                  ),
                 ],
-              ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  label: const Text('Back to ScamShield'),
+                  style: OutlinedButton.styleFrom(foregroundColor: AppColors.primary, padding: const EdgeInsets.all(14)),
+                ),
+              ],
             ),
           ),
         ),
