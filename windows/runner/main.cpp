@@ -27,7 +27,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
+<<<<<<< HEAD
   if (!window.Create(L"scamshield", origin, size)) {
+=======
+  if (!window.Create(L"flutter_application_1", origin, size)) {
+>>>>>>> 8870631c9aba6d3b1d268658e4c130a73b83d07e
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

@@ -1,10 +1,18 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+<<<<<<< HEAD
 project(scamshield LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "scamshield")
+=======
+project(flutter_application_1 LANGUAGES CXX)
+
+# The name of the executable created for the application. Change this to change
+# the on-disk name of your application.
+set(BINARY_NAME "flutter_application_1")
+>>>>>>> 8870631c9aba6d3b1d268658e4c130a73b83d07e
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

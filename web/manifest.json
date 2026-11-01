@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
     "name": "scamshield",
     "short_name": "scamshield",
+=======
+    "name": "flutter_application_1",
+    "short_name": "flutter_application_1",
+>>>>>>> 8870631c9aba6d3b1d268658e4c130a73b83d07e
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

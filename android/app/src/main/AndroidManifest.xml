@@ -1,10 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<<<<<<< HEAD
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="scamshield"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
+=======
+    <application
+        android:label="flutter_application_1"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+>>>>>>> 8870631c9aba6d3b1d268658e4c130a73b83d07e
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -5,10 +5,17 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
+<<<<<<< HEAD
 PRODUCT_NAME = scamshield
 
 // The application's bundle identifier
 PRODUCT_BUNDLE_IDENTIFIER = com.example.scamshield
+=======
+PRODUCT_NAME = flutter_application_1
+
+// The application's bundle identifier
+PRODUCT_BUNDLE_IDENTIFIER = com.example.flutterApplication1
+>>>>>>> 8870631c9aba6d3b1d268658e4c130a73b83d07e
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.

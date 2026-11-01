@@ -15,7 +15,11 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
                      BuildableName = "scamshield.app"
+=======
+                     BuildableName = "flutter_application_1.app"
+>>>>>>> 8870631c9aba6d3b1d268658e4c130a73b83d07e
                      BlueprintName = "Runner"
                      ReferencedContainer = "container:Runner.xcodeproj">
                   </BuildableReference>
@@ -33,7 +37,11 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
                BuildableName = "scamshield.app"
+=======
+               BuildableName = "flutter_application_1.app"
+>>>>>>> 8870631c9aba6d3b1d268658e4c130a73b83d07e
                BlueprintName = "Runner"
                ReferencedContainer = "container:Runner.xcodeproj">
             </BuildableReference>
@@ -49,7 +57,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
             BuildableName = "scamshield.app"
+=======
+            BuildableName = "flutter_application_1.app"
+>>>>>>> 8870631c9aba6d3b1d268658e4c130a73b83d07e
             BlueprintName = "Runner"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
@@ -84,7 +96,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
             BuildableName = "scamshield.app"
+=======
+            BuildableName = "flutter_application_1.app"
+>>>>>>> 8870631c9aba6d3b1d268658e4c130a73b83d07e
             BlueprintName = "Runner"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
@@ -101,7 +117,11 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "33CC10EC2044A3C60003C045"
+<<<<<<< HEAD
             BuildableName = "scamshield.app"
+=======
+            BuildableName = "flutter_application_1.app"
+>>>>>>> 8870631c9aba6d3b1d268658e4c130a73b83d07e
             BlueprintName = "Runner"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
